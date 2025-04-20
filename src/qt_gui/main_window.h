@@ -22,10 +22,11 @@
 #include "game_list_utils.h"
 #include "main_window_themes.h"
 #include "main_window_ui.h"
+#include "../common/observer/subscriber.h"
 
 class GameListFrame;
 
-class MainWindow : public QMainWindow {
+class MainWindow : public QMainWindow, public Common::Subscriber {
     Q_OBJECT
 signals:
     void WindowResized(QResizeEvent* event);
@@ -38,6 +39,7 @@ public:
     void InstallDirectory();
     void StartGame();
     void PauseGame();
+    void Notify() override;
     bool showLabels;
 
 private Q_SLOTS:
@@ -106,6 +108,8 @@ private:
         std::make_shared<CompatibilityInfoClass>();
 
     QTranslator* translator;
+
+    std::unique_ptr<Core::Emulator> m_emulator;
 
 protected:
     bool eventFilter(QObject* obj, QEvent* event) override;

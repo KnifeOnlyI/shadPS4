@@ -687,6 +687,7 @@ set(COMMON src/common/logging/backend.cpp
            src/common/memory_patcher.cpp
            ${CMAKE_CURRENT_BINARY_DIR}/src/common/scm_rev.cpp
            src/common/scm_rev.h
+           src/common/observer/subscriber.h
 )
 
 if (ENABLE_DISCORD_RPC)

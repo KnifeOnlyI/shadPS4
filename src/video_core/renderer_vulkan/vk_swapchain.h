@@ -130,6 +130,7 @@ private:
     bool needs_recreation = true;
     bool needs_hdr = false;    // The game requested HDR swapchain
     bool supports_hdr = false; // SC supports HDR output
+    bool invalid = false;
 };
 
 } // namespace Vulkan

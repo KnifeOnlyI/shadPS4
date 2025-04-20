@@ -53,7 +53,7 @@ public:
     void Stop() {
         if (Joinable()) {
             stop.request_stop();
-            Join();
+            Join(); // FIXME: Produce an exception (Linker::Release
         }
         thread = nullptr;
         func = nullptr;

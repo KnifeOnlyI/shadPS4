@@ -4,12 +4,11 @@
 #pragma once
 
 #include <filesystem>
-#include <thread>
 
-#include "common/singleton.h"
 #include "core/linker.h"
 #include "input/controller.h"
 #include "sdl_window.h"
+#include "common/observer/subscriber.h"
 
 namespace Core {
 
@@ -23,19 +22,24 @@ struct SysModules {
 class Emulator {
 public:
     Emulator();
+
+    explicit Emulator(Common::Subscriber *toNotifyWhenExit);
+
     ~Emulator();
 
-    void Run(const std::filesystem::path& file, const std::vector<std::string> args = {});
-    void UpdatePlayTime(const std::string& serial);
+    void Run(const std::filesystem::path &file, const std::vector<std::string> args = {});
+    std::unique_ptr<Frontend::WindowSDL> window;
 
 private:
+    void UpdatePlayTime(const std::string& serial) const;
+
     void LoadSystemModules(const std::string& game_serial);
 
     Core::MemoryManager* memory;
     Input::GameController* controller;
     Core::Linker* linker;
-    std::unique_ptr<Frontend::WindowSDL> window;
     std::chrono::steady_clock::time_point start_time;
+    Common::Subscriber *m_toNotifyWhenExit;
 };
 
 } // namespace Core

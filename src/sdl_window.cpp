@@ -330,7 +330,9 @@ WindowSDL::WindowSDL(s32 width_, s32 height_, Input::GameController* controller_
     Input::ParseInputConfig(std::string(Common::ElfInfo::Instance().GameSerial()));
 }
 
-WindowSDL::~WindowSDL() = default;
+WindowSDL::~WindowSDL() {
+    SDL_DestroyWindow(window);
+}
 
 void WindowSDL::WaitEvent() {
     // Called on main thread

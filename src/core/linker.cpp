@@ -25,32 +25,38 @@ static PS4_SYSV_ABI void ProgramExitFunc() {
 }
 
 #ifdef ARCH_X86_64
-static PS4_SYSV_ABI void* RunMainEntry [[noreturn]] (EntryParams* params) {
+static PS4_SYSV_ABI void* RunMainEntry [[noreturn]](EntryParams* params) {
     // Start shared library modules
-    asm volatile("andq $-16, %%rsp\n" // Align to 16 bytes
-                 "subq $8, %%rsp\n"   // videoout_basic expects the stack to be misaligned
+    asm volatile("andq $-16, %%rsp\n"// Align to 16 bytes
+        "subq $8, %%rsp\n"           // videoout_basic expects the stack to be misaligned
 
-                 // Kernel also pushes some more things here during process init
-                 // at least: environment, auxv, possibly other things
+        // Kernel also pushes some more things here during process init
+        // at least: environment, auxv, possibly other things
 
-                 "pushq 8(%1)\n" // copy EntryParams to top of stack like the kernel does
-                 "pushq 0(%1)\n" // OpenOrbis expects to find it there
+        "pushq 8(%1)\n"// copy EntryParams to top of stack like the kernel does
+        "pushq 0(%1)\n"// OpenOrbis expects to find it there
 
-                 "movq %1, %%rdi\n" // also pass params and exit func
-                 "movq %2, %%rsi\n" // as before
+        "movq %1, %%rdi\n"// also pass params and exit func
+        "movq %2, %%rsi\n"// as before
 
-                 "jmp *%0\n" // can't use call here, as that would mangle the prepared stack.
-                             // there's no coming back
-                 :
-                 : "r"(params->entry_addr), "r"(params), "r"(ProgramExitFunc)
-                 : "rax", "rsi", "rdi");
+        "jmp *%0\n" // can't use call here, as that would mangle the prepared stack.
+        // there's no coming back
+        :
+        : "r"(params->entry_addr), "r"(params), "r"(ProgramExitFunc)
+        : "rax", "rsi", "rdi");
     UNREACHABLE();
 }
 #endif
 
-Linker::Linker() : memory{Memory::Instance()} {}
+Linker::Linker()
+    : memory{Memory::Instance()} {
+}
 
-Linker::~Linker() = default;
+Linker::~Linker() {
+    if (!released) {
+        Release();
+    }
+}
 
 void Linker::Execute(const std::vector<std::string> args) {
     if (Config::debugDump()) {
@@ -432,6 +438,11 @@ void Linker::DebugDump() {
         elf.ElfHeaderDebugDump(filepath / "elfHeader.txt");
         elf.PHeaderDebugDump(filepath / "elfPHeaders.txt");
     }
+}
+
+void Linker::Release() {
+    main_thread.Stop(); // FIXME: Produce an exception
+    released = true;
 }
 
 } // namespace Core

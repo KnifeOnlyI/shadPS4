@@ -84,6 +84,15 @@ void Swapchain::Create(u32 width_, u32 height_) {
     };
 
     auto [swapchain_result, chain] = instance.GetDevice().createSwapchainKHR(swapchain_info);
+
+    if (swapchain_result != vk::Result::eSuccess) {
+        invalid = true;
+
+        return;
+    }
+
+    invalid = false;
+
     ASSERT_MSG(swapchain_result == vk::Result::eSuccess, "Failed to create swapchain: {}",
                vk::to_string(swapchain_result));
     swapchain = chain;
@@ -116,6 +125,10 @@ void Swapchain::SetHDR(bool hdr) {
 }
 
 bool Swapchain::AcquireNextImage() {
+    if (invalid) {
+        return false;
+    }
+
     vk::Device device = instance.GetDevice();
     vk::Result result =
         device.acquireNextImageKHR(swapchain, std::numeric_limits<u64>::max(),
@@ -205,6 +218,15 @@ void Swapchain::FindPresentFormat() {
 void Swapchain::SetSurfaceProperties() {
     const auto [capabilities_result, capabilities] =
         instance.GetPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
+
+    if (capabilities_result != vk::Result::eSuccess) {
+        invalid = true;
+
+        return;
+    }
+
+    invalid = false;
+
     ASSERT_MSG(capabilities_result == vk::Result::eSuccess,
                "Failed to query surface capabilities: {}", vk::to_string(capabilities_result));
 
@@ -236,6 +258,10 @@ void Swapchain::SetSurfaceProperties() {
 }
 
 void Swapchain::Destroy() {
+    if (invalid) {
+        return;
+    }
+
     vk::Device device = instance.GetDevice();
     const auto wait_result = device.waitIdle();
     if (wait_result != vk::Result::eSuccess) {

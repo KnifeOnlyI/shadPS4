@@ -35,13 +35,18 @@
 #include "core/linker.h"
 #include "core/memory.h"
 #include "emulator.h"
+
+#include <iostream>
+
 #include "video_core/renderdoc.h"
 
 Frontend::WindowSDL* g_window = nullptr;
 
 namespace Core {
+Emulator::Emulator(): Emulator {nullptr} {
+}
 
-Emulator::Emulator() {
+Emulator::Emulator(Common::Subscriber *toNotifyWhenExit): m_toNotifyWhenExit {toNotifyWhenExit} {
     // Initialize NT API functions and set high priority
 #ifdef _WIN32
     Common::NtApi::Initialize();
@@ -71,6 +76,10 @@ Emulator::Emulator() {
 }
 
 Emulator::~Emulator() {
+    std::cout << "Release emulator" << std::endl;
+
+    linker->Release();
+
     const auto config_dir = Common::FS::GetUserPath(Common::FS::PathType::UserDir);
     Config::saveMainWindow(config_dir / "config.toml");
 }
@@ -284,7 +293,14 @@ void Emulator::Run(const std::filesystem::path& file, const std::vector<std::str
     UpdatePlayTime(id);
 #endif
 
-    std::quick_exit(0);
+    std::cout << "Emulator exiting here" << std::endl;
+
+    if (m_toNotifyWhenExit) {
+        std::cout << "Emulator exiting (with)" << std::endl;
+        m_toNotifyWhenExit->Notify();
+    } else {
+        std::cout << "Emulator exiting (without)" << std::endl;
+    }
 }
 
 void Emulator::LoadSystemModules(const std::string& game_serial) {
@@ -332,7 +348,7 @@ void Emulator::LoadSystemModules(const std::string& game_serial) {
 }
 
 #ifdef ENABLE_QT_GUI
-void Emulator::UpdatePlayTime(const std::string& serial) {
+void Emulator::UpdatePlayTime(const std::string& serial) const {
     const auto user_dir = Common::FS::GetUserPath(Common::FS::PathType::UserDir);
     QString filePath = QString::fromStdString((user_dir / "play_time.txt").string());
 

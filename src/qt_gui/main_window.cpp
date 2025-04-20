@@ -22,7 +22,11 @@
 #include "game_install_dialog.h"
 #include "kbm_gui.h"
 #include "main_window.h"
+
+#include <iostream>
+
 #include "settings_dialog.h"
+#include "common/singleton.h"
 
 #include "video_core/renderer_vulkan/vk_instance.h"
 #ifdef ENABLE_DISCORD_RPC
@@ -138,6 +142,16 @@ void MainWindow::PauseGame() {
     is_paused = !is_paused;
     UpdateToolbarButtons();
     SDL_PushEvent(&event);
+}
+
+void MainWindow::Notify() {
+    std::cout << "Emulator exiting notified" << std::endl;
+
+    auto window = std::move(m_emulator->window);
+
+    m_emulator.reset(nullptr);
+
+    std::cout << "Emulator exiting notified end" << std::endl;
 }
 
 void MainWindow::toggleLabelsUnderIcons() {
@@ -1228,15 +1242,8 @@ void MainWindow::StartEmulator(std::filesystem::path path) {
         return;
     }
     isGameRunning = true;
-#ifdef __APPLE__
-    // SDL on macOS requires main thread.
-    Core::Emulator emulator;
-    emulator.Run(path);
-#else
-    std::thread emulator_thread([=] {
-        Core::Emulator emulator;
-        emulator.Run(path);
-    });
-    emulator_thread.detach();
-#endif
+
+    m_emulator = std::make_unique<Core::Emulator>(this);
+
+    m_emulator->Run(path);
 }

@@ -153,6 +153,7 @@ public:
                  Loader::SymbolRecord* return_info);
     void Execute(const std::vector<std::string> args = {});
     void DebugDump();
+    void Release();
 
 private:
     const Module* FindExportedModule(const ModuleInfo& m, const LibraryInfo& l);
@@ -167,6 +168,7 @@ private:
     AppHeapAPI heap_api{};
     std::vector<std::unique_ptr<Module>> m_modules;
     Loader::SymbolsResolver m_hle_symbols{};
+    bool released = false;
 };
 
 } // namespace Core
